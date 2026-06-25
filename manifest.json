@@ -1,0 +1,125 @@
+{
+  "Name": "Stream Dock OBS WebSocket",
+  "Description": "Control OBS on another PC through OBS WebSocket.",
+  "Author": "local",
+  "Version": "0.2.0",
+  "CodePath": "plugin.html",
+  "Icon": "icons/plugin",
+  "Category": "Streaming",
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Actions": [
+    {
+      "UUID": "local.streamdock.obs.stream",
+      "Name": "Stream Toggle",
+      "Tooltip": "Toggle OBS streaming.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Stream", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.record",
+      "Name": "Record Toggle",
+      "Tooltip": "Toggle OBS recording.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Record", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.scene",
+      "Name": "Scene",
+      "Tooltip": "Switch to a configured OBS scene.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Scene", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.mute",
+      "Name": "Source Mute",
+      "Tooltip": "Toggle mute for a configured OBS source.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Mute", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.volume",
+      "Name": "Source Volume",
+      "Tooltip": "Adjust a configured OBS source volume.",
+      "Controllers": ["Knob"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Vol", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.replay",
+      "Name": "Replay Save",
+      "Tooltip": "Save the OBS replay buffer.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Replay", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.visibility",
+      "Name": "Source Visibility",
+      "Tooltip": "Toggle source visibility in a configured scene.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Show", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.transition",
+      "Name": "Studio Transition",
+      "Tooltip": "Trigger the OBS studio mode transition.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Trans", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.scenecollection",
+      "Name": "Scene Collection",
+      "Tooltip": "Switch OBS scene collection.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Coll", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.profile",
+      "Name": "Profile",
+      "Tooltip": "Switch OBS profile.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Profile", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.meter",
+      "Name": "Source Meter",
+      "Tooltip": "Show a simple input volume level meter.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Meter", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.diagnostics",
+      "Name": "Diagnostics",
+      "Tooltip": "Show OBS connection diagnostics.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Diag", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    }
+  ]
+}

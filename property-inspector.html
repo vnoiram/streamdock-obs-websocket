@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="property-inspector.css">
+    <script src="property-inspector.js"></script>
+  </head>
+  <body>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Endpoint</div>
+      <input id="endpoint" class="sdpi-item-value" value="ws://127.0.0.1:4455">
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Password</div>
+      <input id="password" class="sdpi-item-value" type="password">
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Operation</div>
+      <select id="operation" class="sdpi-item-value">
+        <option value="toggle_stream">Toggle stream</option>
+        <option value="toggle_record">Toggle record</option>
+        <option value="switch_scene">Switch scene</option>
+        <option value="toggle_mute">Toggle source mute</option>
+        <option value="volume">Adjust source volume</option>
+      </select>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Scene</div>
+      <input id="sceneName" class="sdpi-item-value" list="sceneList">
+      <datalist id="sceneList"></datalist>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Source</div>
+      <input id="sourceName" class="sdpi-item-value" list="sourceList">
+      <datalist id="sourceList"></datalist>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Scene item</div>
+      <input id="sceneItemName" class="sdpi-item-value" list="sourceList">
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Step dB</div>
+      <input id="volumeStepDb" class="sdpi-item-value" type="number" min="0.1" max="12" step="0.1" value="1">
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Collection</div>
+      <input id="sceneCollectionName" class="sdpi-item-value" list="collectionList">
+      <datalist id="collectionList"></datalist>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Profile</div>
+      <input id="profileName" class="sdpi-item-value" list="profileList">
+      <datalist id="profileList"></datalist>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">OBS</div>
+      <button id="refreshObs" class="sdpi-button" type="button">Refresh</button>
+      <span id="status" class="sdpi-status">not checked</span>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Settings</div>
+      <button id="exportSettings" class="sdpi-button" type="button">Export</button>
+      <label class="sdpi-button" for="importSettings">Import</label>
+      <input id="importSettings" type="file" accept="application/json" hidden>
+    </div>
+  </body>
+</html>
