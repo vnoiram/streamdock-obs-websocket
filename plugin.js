@@ -15,7 +15,10 @@
     connectionPresetName: '',
     confirmDangerous: false,
     filterName: '',
-    filterEnabled: true
+    filterEnabled: true,
+    visibilityMode: 'toggle',
+    volumeSetDb: '',
+    transitionName: ''
   };
 
   var streamDockSocket = null;
@@ -26,7 +29,7 @@
   var contexts = {};
   var pendingRequests = {};
   var requestId = 1;
-  var obsState = { streaming: false, recording: false, streamStartedAt: 0, recordStartedAt: 0, levels: {}, currentScene: '', lastError: '', stats: {} };
+  var obsState = { streaming: false, recording: false, virtualCamera: false, studioMode: false, streamStartedAt: 0, recordStartedAt: 0, levels: {}, currentScene: '', lastError: '', stats: {} };
   var confirmUntil = {};
   var statsTimer = null;
   var titleTimer = null;
@@ -45,6 +48,8 @@
     'local.streamdock.obs.meter': 'meter',
     'local.streamdock.obs.filter': 'toggle_filter',
     'local.streamdock.obs.stats': 'stats',
+    'local.streamdock.obs.virtualcam': 'toggle_virtual_camera',
+    'local.streamdock.obs.studiomode': 'toggle_studio_mode',
     'local.streamdock.obs.diagnostics': 'diagnostics'
   };
 
@@ -112,6 +117,12 @@
     if (settings.operation === 'stats') {
       return formatStats();
     }
+    if (settings.operation === 'toggle_virtual_camera') {
+      return obsState.virtualCamera ? 'VCam\non' : 'VCam\noff';
+    }
+    if (settings.operation === 'toggle_studio_mode') {
+      return obsState.studioMode ? 'Studio\non' : 'Studio\noff';
+    }
     if (settings.operation === 'toggle_mute') {
       return 'Mute\n' + (settings.sourceName || 'unset');
     }
@@ -128,7 +139,7 @@
       return 'Show\n' + (settings.sceneItemName || settings.sourceName || 'unset');
     }
     if (settings.operation === 'studio_transition') {
-      return 'Studio\ntrans';
+      return 'Trans\n' + (settings.transitionName || 'go');
     }
     if (settings.operation === 'switch_scene_collection') {
       return 'Coll\n' + (settings.sceneCollectionName || 'unset');
@@ -267,6 +278,14 @@
           obsState.currentScene = data.currentProgramSceneName || '';
           refreshTitles();
         });
+        obsRequest('GetVirtualCamStatus', {}, function (data) {
+          obsState.virtualCamera = !!data.outputActive;
+          refreshTitles();
+        });
+        obsRequest('GetStudioModeEnabled', {}, function (data) {
+          obsState.studioMode = !!data.studioModeEnabled;
+          refreshTitles();
+        });
         pollStats();
         startTitleTimer();
         refreshTitles();
@@ -401,6 +420,12 @@
     if (event.eventType === 'CurrentProgramSceneChanged') {
       obsState.currentScene = event.eventData && event.eventData.sceneName || '';
     }
+    if (event.eventType === 'VirtualcamStateChanged') {
+      obsState.virtualCamera = !!(event.eventData && event.eventData.outputActive);
+    }
+    if (event.eventType === 'StudioModeStateChanged') {
+      obsState.studioMode = !!(event.eventData && event.eventData.studioModeEnabled);
+    }
     if (event.eventType === 'InputVolumeMeters' && event.eventData && Array.isArray(event.eventData.inputs)) {
       event.eventData.inputs.forEach(function (input) {
         var level = 0;
@@ -431,7 +456,7 @@
       showAlert(context);
       return;
     }
-    if ((settings.operation === 'toggle_mute' || settings.operation === 'volume') && !settings.sourceName) {
+    if ((settings.operation === 'toggle_mute' || settings.operation === 'volume' || settings.operation === 'set_volume') && !settings.sourceName) {
       showAlert(context);
       return;
     }
@@ -488,10 +513,17 @@
         }
         obsRequest('SetInputVolume', { inputName: settings.sourceName, inputVolumeDb: current + delta }, function () { showOk(context); });
       });
+    } else if (settings.operation === 'set_volume' && settings.sourceName) {
+      obsRequest('SetInputVolume', { inputName: settings.sourceName, inputVolumeDb: Number(settings.volumeSetDb) || 0 }, function () { showOk(context); });
     } else if (settings.operation === 'save_replay') {
       obsRequest('SaveReplayBuffer', {}, function () { showOk(context); });
     } else if (settings.operation === 'studio_transition') {
-      obsRequest('TriggerStudioModeTransition', {}, function () { showOk(context); });
+      var transitionPayload = settings.transitionName ? { transitionName: settings.transitionName } : {};
+      obsRequest('TriggerStudioModeTransition', transitionPayload, function () { showOk(context); });
+    } else if (settings.operation === 'toggle_virtual_camera') {
+      obsRequest('ToggleVirtualCam', {}, function () { showOk(context); });
+    } else if (settings.operation === 'toggle_studio_mode') {
+      obsRequest('SetStudioModeEnabled', { studioModeEnabled: !obsState.studioMode }, function () { showOk(context); });
     } else if (settings.operation === 'switch_scene_collection') {
       obsRequest('SetCurrentSceneCollection', { sceneCollectionName: settings.sceneCollectionName }, function () { showOk(context); });
     } else if (settings.operation === 'switch_profile') {
@@ -500,10 +532,11 @@
       var itemName = settings.sceneItemName || settings.sourceName;
       obsRequest('GetSceneItemId', { sceneName: settings.sceneName, sourceName: itemName }, function (data) {
         obsRequest('GetSceneItemEnabled', { sceneName: settings.sceneName, sceneItemId: data.sceneItemId }, function (enabledData) {
+          var nextEnabled = settings.visibilityMode === 'show' ? true : settings.visibilityMode === 'hide' ? false : !enabledData.sceneItemEnabled;
           obsRequest('SetSceneItemEnabled', {
             sceneName: settings.sceneName,
             sceneItemId: data.sceneItemId,
-            sceneItemEnabled: !enabledData.sceneItemEnabled
+            sceneItemEnabled: nextEnabled
           }, function () { showOk(context); });
         });
       });

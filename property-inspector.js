@@ -17,7 +17,10 @@
     connectionPresetName: '',
     confirmDangerous: false,
     filterName: '',
-    filterEnabled: true
+    filterEnabled: true,
+    visibilityMode: 'toggle',
+    volumeSetDb: '',
+    transitionName: ''
   };
   var ACTION_OPERATIONS = {
     'local.streamdock.obs.stream': 'toggle_stream',
@@ -32,7 +35,9 @@
     'local.streamdock.obs.profile': 'switch_profile',
     'local.streamdock.obs.meter': 'meter',
     'local.streamdock.obs.filter': 'toggle_filter',
-    'local.streamdock.obs.stats': 'stats'
+    'local.streamdock.obs.stats': 'stats',
+    'local.streamdock.obs.virtualcam': 'toggle_virtual_camera',
+    'local.streamdock.obs.studiomode': 'toggle_studio_mode'
   };
   var obsSocket = null;
   var obsRequestId = 1;
@@ -60,6 +65,9 @@
     settings.confirmDangerous = byId('confirmDangerous').checked;
     settings.filterName = byId('filterName').value.trim();
     settings.filterEnabled = byId('filterEnabled').checked;
+    settings.visibilityMode = byId('visibilityMode').value;
+    settings.volumeSetDb = byId('volumeSetDb').value;
+    settings.transitionName = byId('transitionName').value.trim();
     websocket.send(JSON.stringify({ event: 'setSettings', context: context, payload: settings }));
   }
 
@@ -306,7 +314,7 @@
   };
 
   window.addEventListener('DOMContentLoaded', function () {
-    ['endpoint', 'password', 'operation', 'sceneName', 'sourceName', 'sceneItemName', 'volumeStepDb', 'sceneCollectionName', 'profileName', 'connectionPresetsJson', 'connectionPresetName', 'filterName'].forEach(function (id) {
+    ['endpoint', 'password', 'operation', 'sceneName', 'sourceName', 'sceneItemName', 'volumeStepDb', 'volumeSetDb', 'visibilityMode', 'sceneCollectionName', 'profileName', 'connectionPresetsJson', 'connectionPresetName', 'filterName', 'transitionName'].forEach(function (id) {
       byId(id).addEventListener('input', update);
       byId(id).addEventListener('change', update);
     });

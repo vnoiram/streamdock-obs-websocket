@@ -131,6 +131,24 @@
       "PropertyInspectorPath": "property-inspector.html"
     },
     {
+      "UUID": "local.streamdock.obs.virtualcam",
+      "Name": "Virtual Camera",
+      "Tooltip": "Toggle OBS virtual camera.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "VCam", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.studiomode",
+      "Name": "Studio Mode",
+      "Tooltip": "Toggle OBS studio mode.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Studio", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
       "UUID": "local.streamdock.obs.diagnostics",
       "Name": "Diagnostics",
       "Tooltip": "Show OBS connection diagnostics.",

@@ -31,6 +31,8 @@ Actions:
 - Source Meter
 - Source Filter
 - Stats
+- Virtual Camera
+- Studio Mode
 - Scene Collection
 - Profile
 - Diagnostics
@@ -40,6 +42,7 @@ Actions:
 - Optional connection presets and second-press confirmation for dangerous operations
 - Generated key images that reflect OBS state: offline, live, recording, scene, source mute, and level meter states.
 - Stream and record actions show elapsed time while active.
+- Added virtual camera toggle, studio mode toggle, forced show/hide visibility modes, absolute source-volume setting, and named studio transition triggering.
 - Property Inspector auto-syncs OBS lists when opened, fetches scene items for the selected scene, fetches source filters for the selected source, and warns when configured scene/source/item/filter/profile/collection names are missing from the current OBS lists.
 - Added Property Inspector `Copy` / `Paste` for quickly duplicating action settings between keys.
 
@@ -63,6 +66,9 @@ Implemented operations:
 - `StartStream` / `StopStream`
 - `StartRecord` / `StopRecord`
 - `SetSourceFilterEnabled`
+- `ToggleVirtualCam`
+- `SetStudioModeEnabled`
+- `TriggerStudioModeTransition` with optional transition name
 
 ## Repository Layout
 

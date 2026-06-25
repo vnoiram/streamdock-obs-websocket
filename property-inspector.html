@@ -26,10 +26,13 @@
         <option value="switch_scene">Switch scene</option>
         <option value="toggle_mute">Toggle source mute</option>
         <option value="volume">Adjust source volume</option>
+        <option value="set_volume">Set source volume</option>
         <option value="toggle_visibility">Toggle source visibility</option>
         <option value="toggle_filter">Set source filter</option>
         <option value="save_replay">Save replay</option>
         <option value="studio_transition">Studio transition</option>
+        <option value="toggle_studio_mode">Toggle studio mode</option>
+        <option value="toggle_virtual_camera">Toggle virtual camera</option>
         <option value="switch_scene_collection">Switch collection</option>
         <option value="switch_profile">Switch profile</option>
         <option value="meter">Source meter</option>
@@ -56,6 +59,18 @@
       <input id="volumeStepDb" class="sdpi-item-value" type="number" min="0.1" max="12" step="0.1" value="1">
     </div>
     <div class="sdpi-item">
+      <div class="sdpi-item-label">Set dB</div>
+      <input id="volumeSetDb" class="sdpi-item-value" type="number" min="-100" max="26" step="0.1" value="0">
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Visibility</div>
+      <select id="visibilityMode" class="sdpi-item-value">
+        <option value="toggle">Toggle</option>
+        <option value="show">Show</option>
+        <option value="hide">Hide</option>
+      </select>
+    </div>
+    <div class="sdpi-item">
       <div class="sdpi-item-label">Collection</div>
       <input id="sceneCollectionName" class="sdpi-item-value" list="collectionList">
       <datalist id="collectionList"></datalist>
@@ -69,6 +84,10 @@
       <div class="sdpi-item-label">Filter</div>
       <input id="filterName" class="sdpi-item-value" list="filterList" placeholder="OBS filter name">
       <datalist id="filterList"></datalist>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Transition</div>
+      <input id="transitionName" class="sdpi-item-value" placeholder="optional transition name">
     </div>
     <div class="sdpi-item">
       <div class="sdpi-item-label">Filter on</div>
