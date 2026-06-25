@@ -29,6 +29,8 @@ Actions:
 - Source Visibility
 - Studio Transition
 - Source Meter
+- Source Filter
+- Stats
 - Scene Collection
 - Profile
 - Diagnostics
@@ -36,6 +38,10 @@ Actions:
 - Explicit start/stop stream and recording operations
 - Source filter enable/disable
 - Optional connection presets and second-press confirmation for dangerous operations
+- Generated key images that reflect OBS state: offline, live, recording, scene, source mute, and level meter states.
+- Stream and record actions show elapsed time while active.
+- Property Inspector auto-syncs OBS lists when opened, fetches scene items for the selected scene, fetches source filters for the selected source, and warns when configured scene/source/item/filter/profile/collection names are missing from the current OBS lists.
+- Added Property Inspector `Copy` / `Paste` for quickly duplicating action settings between keys.
 
 The plugin speaks OBS WebSocket v5 directly from the Stream Dock plugin runtime. It handles the OBS `Hello` and `Identify` flow and computes authentication when a password is configured.
 
@@ -111,9 +117,14 @@ npm run release:zip
    - `Password`: OBS WebSocket password, if configured.
    - `Operation`: stream, record, scene, mute, or volume.
    - `Scene` or `Source`: required for scene/source operations.
-6. Use the Property Inspector's `Refresh` button to fetch current OBS scenes and inputs for autocomplete.
+6. Use the Property Inspector's `Refresh` button to fetch current OBS scenes, scene items, inputs, profiles, collections, and source filters for autocomplete. The Property Inspector also attempts this sync when opened.
+7. Use `Copy` / `Paste` in the Property Inspector to duplicate a configured OBS action to another key without exporting a file.
 
-The plugin subscribes to OBS events and reflects stream/record state. The Source Meter action shows a simple level percentage when OBS sends input meter events.
+The plugin subscribes to OBS events and reflects stream/record state. Stream and record keys show elapsed time, using OBS output duration when available. The Source Meter action shows a simple level percentage when OBS sends input meter events.
+
+For Source Visibility, set `Scene` first, then press `Refresh`. The `Scene item` field is populated from `GetSceneItemList` for that scene, which helps avoid accidentally selecting a source that is not in the scene.
+
+Key images are generated locally from state. For example, stream actions show `LIVE ON/OFF`, record actions show `REC ON/OFF`, meter actions show the current level, and offline actions show `OBS OFF`.
 
 ## Build
 

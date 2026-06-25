@@ -26,8 +26,10 @@
   var contexts = {};
   var pendingRequests = {};
   var requestId = 1;
-  var obsState = { streaming: false, recording: false, levels: {}, currentScene: '', lastError: '', stats: {} };
+  var obsState = { streaming: false, recording: false, streamStartedAt: 0, recordStartedAt: 0, levels: {}, currentScene: '', lastError: '', stats: {} };
   var confirmUntil = {};
+  var statsTimer = null;
+  var titleTimer = null;
 
   var ACTION_OPERATIONS = {
     'local.streamdock.obs.stream': 'toggle_stream',
@@ -41,6 +43,8 @@
     'local.streamdock.obs.scenecollection': 'switch_scene_collection',
     'local.streamdock.obs.profile': 'switch_profile',
     'local.streamdock.obs.meter': 'meter',
+    'local.streamdock.obs.filter': 'toggle_filter',
+    'local.streamdock.obs.stats': 'stats',
     'local.streamdock.obs.diagnostics': 'diagnostics'
   };
 
@@ -60,6 +64,10 @@
 
   function setTitle(context, title) {
     sendToStreamDock({ event: 'setTitle', context: context, payload: { title: title } });
+  }
+
+  function setImage(context, image) {
+    sendToStreamDock({ event: 'setImage', context: context, payload: { image: image } });
   }
 
   function contextSettings(context) {
@@ -98,8 +106,8 @@
     if (settings.operation === 'switch_scene') {
       return 'Scene\n' + (obsState.currentScene || settings.sceneName || 'unset');
     }
-    if (settings.operation === 'toggle_record') {
-      return obsState.recording ? 'Record\non' : 'Record\noff';
+    if (settings.operation === 'toggle_record' || settings.operation === 'start_record' || settings.operation === 'stop_record') {
+      return obsState.recording ? 'Record\n' + formatElapsed(obsState.recordStartedAt) : 'Record\noff';
     }
     if (settings.operation === 'stats') {
       return formatStats();
@@ -128,7 +136,10 @@
     if (settings.operation === 'switch_profile') {
       return 'Profile\n' + (settings.profileName || 'unset');
     }
-    return obsState.streaming ? 'Stream\non' : 'Stream\noff';
+    if (settings.operation === 'toggle_stream' || settings.operation === 'start_stream' || settings.operation === 'stop_stream') {
+      return obsState.streaming ? 'Stream\n' + formatElapsed(obsState.streamStartedAt) : 'Stream\noff';
+    }
+    return obsState.streaming ? 'Stream\n' + formatElapsed(obsState.streamStartedAt) : 'Stream\noff';
   }
 
   function formatStats() {
@@ -139,9 +150,69 @@
     return ['Stats', fps || cpu || render || 'waiting', cpu].filter(Boolean).join('\n');
   }
 
+  function formatElapsed(startedAt) {
+    if (!startedAt) {
+      return 'on';
+    }
+    var total = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+    var hours = Math.floor(total / 3600);
+    var minutes = Math.floor((total % 3600) / 60);
+    var seconds = total % 60;
+    return [
+      hours,
+      minutes < 10 ? '0' + minutes : String(minutes),
+      seconds < 10 ? '0' + seconds : String(seconds)
+    ].join(':');
+  }
+
   function refreshTitles() {
     Object.keys(contexts).forEach(function (context) {
       setTitle(context, titleFor(context));
+      setImage(context, imageFor(context));
+    });
+  }
+
+  function imageFor(context) {
+    var settings = contextSettings(context);
+    if (!obsSocket || obsSocket.readyState !== WebSocket.OPEN || !identified) {
+      return svgImage('#31343b', '#aeb7c2', 'OBS', 'OFF', 0);
+    }
+    if (settings.operation === 'toggle_record' || settings.operation === 'start_record' || settings.operation === 'stop_record') {
+      return svgImage(obsState.recording ? '#b4232a' : '#383838', '#ffffff', 'REC', obsState.recording ? 'ON' : 'OFF', obsState.recording ? 100 : 0);
+    }
+    if (settings.operation === 'toggle_mute') {
+      return svgImage('#283745', '#ffffff', obsState.lastMute ? 'MUTE' : 'AUD', settings.sourceName || '', obsState.lastMute ? 100 : 0);
+    }
+    if (settings.operation === 'meter') {
+      var level = Math.round(obsState.levels[settings.sourceName] || 0);
+      return svgImage(level > 70 ? '#b7791f' : '#254d3a', '#ffffff', String(level), 'LEVEL', level);
+    }
+    if (settings.operation === 'switch_scene') {
+      return svgImage('#273b57', '#ffffff', 'SCN', obsState.currentScene || settings.sceneName || '', 100);
+    }
+    return svgImage(obsState.streaming ? '#22543d' : '#383838', '#ffffff', 'LIVE', obsState.streaming ? 'ON' : 'OFF', obsState.streaming ? 100 : 0);
+  }
+
+  function svgImage(background, foreground, main, sub, fillPercent) {
+    var fill = Math.max(0, Math.min(100, Number(fillPercent) || 0));
+    var barHeight = Math.round(116 * fill / 100);
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">' +
+      '<rect width="144" height="144" rx="20" fill="' + background + '"/>' +
+      '<rect x="14" y="' + (124 - barHeight) + '" width="116" height="' + barHeight + '" rx="10" fill="' + foreground + '" opacity="0.18"/>' +
+      '<text x="72" y="66" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="' + foreground + '">' + escapeSvg(main) + '</text>' +
+      '<text x="72" y="99" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="' + foreground + '">' + escapeSvg(truncateImageText(sub)) + '</text>' +
+      '</svg>';
+    return 'data:image/svg+xml;charset=utf8,' + encodeURIComponent(svg);
+  }
+
+  function truncateImageText(value) {
+    value = String(value || '');
+    return value.length > 10 ? value.slice(0, 10) : value;
+  }
+
+  function escapeSvg(value) {
+    return String(value || '').replace(/[&<>"]/g, function (ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch];
     });
   }
 
@@ -185,11 +256,11 @@
         identified = true;
         obsState.lastError = '';
         obsRequest('GetStreamStatus', {}, function (data) {
-          obsState.streaming = !!data.outputActive;
+          updateOutputState('stream', !!data.outputActive, outputDurationMs(data));
           refreshTitles();
         });
         obsRequest('GetRecordStatus', {}, function (data) {
-          obsState.recording = !!data.outputActive;
+          updateOutputState('record', !!data.outputActive, outputDurationMs(data));
           refreshTitles();
         });
         obsRequest('GetCurrentProgramScene', {}, function (data) {
@@ -197,6 +268,7 @@
           refreshTitles();
         });
         pollStats();
+        startTitleTimer();
         refreshTitles();
       } else if (message.op === 7 && message.d) {
         var handler = pendingRequests[message.d.requestId];
@@ -216,6 +288,8 @@
 
     obsSocket.onclose = function () {
       identified = false;
+      clearTimeout(statsTimer);
+      statsTimer = null;
       obsState.lastError = 'connection closed';
       logMessage('connection closed');
       refreshTitles();
@@ -269,19 +343,60 @@
     if (!identified) {
       return;
     }
+    clearTimeout(statsTimer);
     obsRequest('GetStats', {}, function (data) {
       obsState.stats = data || {};
       refreshTitles();
     });
-    setTimeout(pollStats, 5000);
+    statsTimer = setTimeout(pollStats, 5000);
+  }
+
+  function startTitleTimer() {
+    if (titleTimer) {
+      return;
+    }
+    titleTimer = setInterval(function () {
+      if (obsState.streaming || obsState.recording) {
+        refreshTitles();
+      }
+    }, 1000);
+  }
+
+  function updateOutputState(kind, active, durationMs) {
+    var startedKey = kind === 'stream' ? 'streamStartedAt' : 'recordStartedAt';
+    var activeKey = kind === 'stream' ? 'streaming' : 'recording';
+    obsState[activeKey] = !!active;
+    if (active) {
+      var duration = Number(durationMs);
+      obsState[startedKey] = Number.isFinite(duration) && duration > 0 ? Date.now() - duration : (obsState[startedKey] || Date.now());
+    } else {
+      obsState[startedKey] = 0;
+    }
+  }
+
+  function outputDurationMs(data) {
+    var duration = Number(data && data.outputDuration);
+    if (Number.isFinite(duration) && duration > 0) {
+      return duration;
+    }
+    var timecode = String(data && data.outputTimecode || '');
+    var match = timecode.match(/^(\d+):(\d{2}):(\d{2})(?:[.:](\d+))?/);
+    if (!match) {
+      return 0;
+    }
+    var ms = Number(match[4] || 0);
+    if (match[4] && match[4].length === 2) {
+      ms *= 10;
+    }
+    return ((Number(match[1]) * 3600) + (Number(match[2]) * 60) + Number(match[3])) * 1000 + ms;
   }
 
   function handleObsEvent(event) {
     if (event.eventType === 'StreamStateChanged') {
-      obsState.streaming = !!(event.eventData && event.eventData.outputActive);
+      updateOutputState('stream', !!(event.eventData && event.eventData.outputActive), outputDurationMs(event.eventData));
     }
     if (event.eventType === 'RecordStateChanged') {
-      obsState.recording = !!(event.eventData && event.eventData.outputActive);
+      updateOutputState('record', !!(event.eventData && event.eventData.outputActive), outputDurationMs(event.eventData));
     }
     if (event.eventType === 'CurrentProgramSceneChanged') {
       obsState.currentScene = event.eventData && event.eventData.sceneName || '';
@@ -294,6 +409,9 @@
         }
         obsState.levels[input.inputName] = level;
       });
+    }
+    if (event.eventType === 'InputMuteStateChanged' && event.eventData) {
+      obsState.lastMute = !!event.eventData.inputMuted;
     }
     refreshTitles();
   }
@@ -354,7 +472,13 @@
     } else if (settings.operation === 'stop_stream') {
       obsRequest('StopStream', {}, function () { showOk(context); });
     } else if (settings.operation === 'toggle_mute' && settings.sourceName) {
-      obsRequest('ToggleInputMute', { inputName: settings.sourceName }, function () { showOk(context); });
+      obsRequest('ToggleInputMute', { inputName: settings.sourceName }, function (data) {
+        if (typeof data.inputMuted === 'boolean') {
+          obsState.lastMute = data.inputMuted;
+        }
+        showOk(context);
+        refreshTitles();
+      });
     } else if (settings.operation === 'volume' && settings.sourceName) {
       var delta = (Number(ticks) || 1) * (Number(settings.volumeStepDb) || 1);
       obsRequest('GetInputVolume', { inputName: settings.sourceName }, function (data) {

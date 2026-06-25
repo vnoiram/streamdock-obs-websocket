@@ -48,7 +48,8 @@
     </div>
     <div class="sdpi-item">
       <div class="sdpi-item-label">Scene item</div>
-      <input id="sceneItemName" class="sdpi-item-value" list="sourceList">
+      <input id="sceneItemName" class="sdpi-item-value" list="sceneItemList">
+      <datalist id="sceneItemList"></datalist>
     </div>
     <div class="sdpi-item">
       <div class="sdpi-item-label">Step dB</div>
@@ -66,7 +67,8 @@
     </div>
     <div class="sdpi-item">
       <div class="sdpi-item-label">Filter</div>
-      <input id="filterName" class="sdpi-item-value" placeholder="OBS filter name">
+      <input id="filterName" class="sdpi-item-value" list="filterList" placeholder="OBS filter name">
+      <datalist id="filterList"></datalist>
     </div>
     <div class="sdpi-item">
       <div class="sdpi-item-label">Filter on</div>
@@ -94,6 +96,8 @@
     </div>
     <div class="sdpi-item">
       <div class="sdpi-item-label">Settings</div>
+      <button id="copySettings" class="sdpi-button" type="button">Copy</button>
+      <button id="pasteSettings" class="sdpi-button" type="button">Paste</button>
       <button id="exportSettings" class="sdpi-button" type="button">Export</button>
       <label class="sdpi-button" for="importSettings">Import</label>
       <input id="importSettings" type="file" accept="application/json" hidden>

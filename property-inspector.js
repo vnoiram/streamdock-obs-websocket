@@ -30,10 +30,13 @@
     'local.streamdock.obs.transition': 'studio_transition',
     'local.streamdock.obs.scenecollection': 'switch_scene_collection',
     'local.streamdock.obs.profile': 'switch_profile',
-    'local.streamdock.obs.meter': 'meter'
+    'local.streamdock.obs.meter': 'meter',
+    'local.streamdock.obs.filter': 'toggle_filter',
+    'local.streamdock.obs.stats': 'stats'
   };
   var obsSocket = null;
   var obsRequestId = 1;
+  var obsLists = { scenes: [], sources: [], sceneItems: [], collections: [], profiles: [], filters: [] };
 
   function byId(id) {
     return document.getElementById(id);
@@ -83,19 +86,37 @@
     });
   }
 
-  function obsRequest(type) {
+  function obsRequest(type, data) {
     obsSocket.send(JSON.stringify({
       op: 6,
       d: {
         requestType: type,
         requestId: String(obsRequestId++),
-        requestData: {}
+        requestData: data || {}
       }
     }));
   }
 
+  function requestObsLists() {
+    setStatus('requesting');
+    obsRequest('GetSceneList');
+    obsRequest('GetInputList');
+    obsRequest('GetSceneCollectionList');
+    obsRequest('GetProfileList');
+    if (settings.sceneName) {
+      obsRequest('GetSceneItemList', { sceneName: settings.sceneName });
+    }
+    if (settings.sourceName) {
+      obsRequest('GetSourceFilterList', { sourceName: settings.sourceName });
+    }
+  }
+
   function refreshObsLists() {
-    if (obsSocket && (obsSocket.readyState === WebSocket.OPEN || obsSocket.readyState === WebSocket.CONNECTING)) {
+    if (obsSocket && obsSocket.readyState === WebSocket.OPEN) {
+      requestObsLists();
+      return;
+    }
+    if (obsSocket && obsSocket.readyState === WebSocket.CONNECTING) {
       return;
     }
     setStatus('connecting');
@@ -117,25 +138,35 @@
           identify();
         }
       } else if (message.op === 2) {
-        setStatus('requesting');
-        obsRequest('GetSceneList');
-        obsRequest('GetInputList');
-        obsRequest('GetSceneCollectionList');
-        obsRequest('GetProfileList');
+        requestObsLists();
       } else if (message.op === 7 && message.d && message.d.requestStatus && message.d.requestStatus.result) {
         if (message.d.requestType === 'GetSceneList') {
-          renderList('sceneList', (message.d.responseData.scenes || []).map(function (scene) { return scene.sceneName; }));
+          obsLists.scenes = (message.d.responseData.scenes || []).map(function (scene) { return scene.sceneName; });
+          renderList('sceneList', obsLists.scenes);
         }
         if (message.d.requestType === 'GetInputList') {
-          renderList('sourceList', (message.d.responseData.inputs || []).map(function (input) { return input.inputName; }));
+          obsLists.sources = (message.d.responseData.inputs || []).map(function (input) { return input.inputName; });
+          renderList('sourceList', obsLists.sources);
+        }
+        if (message.d.requestType === 'GetSceneItemList') {
+          obsLists.sceneItems = (message.d.responseData.sceneItems || []).map(function (item) {
+            return item.sourceName || item.sceneItemName || '';
+          }).filter(Boolean);
+          renderList('sceneItemList', obsLists.sceneItems);
         }
         if (message.d.requestType === 'GetSceneCollectionList') {
-          renderList('collectionList', message.d.responseData.sceneCollections || []);
+          obsLists.collections = message.d.responseData.sceneCollections || [];
+          renderList('collectionList', obsLists.collections);
         }
         if (message.d.requestType === 'GetProfileList') {
-          renderList('profileList', message.d.responseData.profiles || []);
+          obsLists.profiles = message.d.responseData.profiles || [];
+          renderList('profileList', obsLists.profiles);
         }
-        setStatus('lists loaded');
+        if (message.d.requestType === 'GetSourceFilterList') {
+          obsLists.filters = (message.d.responseData.filters || []).map(function (filter) { return filter.filterName; });
+          renderList('filterList', obsLists.filters);
+        }
+        validateSelections();
       } else if (message.op === 7) {
         setStatus('OBS request failed');
       }
@@ -158,6 +189,23 @@
     });
   }
 
+  function warnIfMissing(warnings, label, value, values) {
+    if (value && values.length && values.indexOf(value) === -1) {
+      warnings.push(label + ' missing');
+    }
+  }
+
+  function validateSelections() {
+    var warnings = [];
+    warnIfMissing(warnings, 'scene', settings.sceneName, obsLists.scenes);
+    warnIfMissing(warnings, 'source', settings.sourceName, obsLists.sources);
+    warnIfMissing(warnings, 'item', settings.sceneItemName, obsLists.sceneItems.length ? obsLists.sceneItems : obsLists.sources);
+    warnIfMissing(warnings, 'collection', settings.sceneCollectionName, obsLists.collections);
+    warnIfMissing(warnings, 'profile', settings.profileName, obsLists.profiles);
+    warnIfMissing(warnings, 'filter', settings.filterName, obsLists.filters);
+    setStatus(warnings.length ? warnings.join(', ') : 'lists loaded');
+  }
+
   function applySettings(next) {
     settings = Object.assign({}, settings, next || {});
     Object.keys(settings).forEach(function (key) {
@@ -170,6 +218,9 @@
       }
     });
     renderConnectionPresetNames();
+    if (settings.endpoint) {
+      setTimeout(refreshObsLists, 100);
+    }
   }
 
   function connectionPresets() {
@@ -213,6 +264,25 @@
     });
   }
 
+  function copySettings() {
+    update();
+    navigator.clipboard.writeText(JSON.stringify(settings, null, 2)).then(function () {
+      setStatus('settings copied');
+    }).catch(function () {
+      setStatus('copy failed');
+    });
+  }
+
+  function pasteSettings() {
+    navigator.clipboard.readText().then(function (text) {
+      applySettings(JSON.parse(text));
+      update();
+      setStatus('settings pasted');
+    }).catch(function () {
+      setStatus('paste failed');
+    });
+  }
+
   window.connectElgatoStreamDeckSocket = function (port, uuid, registerEvent, info, actionInfo) {
     var parsedActionInfo = JSON.parse(actionInfo || '{}');
     context = parsedActionInfo.context || uuid;
@@ -240,10 +310,22 @@
       byId(id).addEventListener('input', update);
       byId(id).addEventListener('change', update);
     });
+    byId('sourceName').addEventListener('change', function () {
+      obsLists.filters = [];
+      renderList('filterList', []);
+      refreshObsLists();
+    });
+    byId('sceneName').addEventListener('change', function () {
+      obsLists.sceneItems = [];
+      renderList('sceneItemList', []);
+      refreshObsLists();
+    });
     ['confirmDangerous', 'filterEnabled'].forEach(function (id) {
       byId(id).addEventListener('change', update);
     });
     byId('refreshObs').addEventListener('click', refreshObsLists);
+    byId('copySettings').addEventListener('click', copySettings);
+    byId('pasteSettings').addEventListener('click', pasteSettings);
     byId('exportSettings').addEventListener('click', exportSettings);
     byId('importSettings').addEventListener('change', importSettings);
   });

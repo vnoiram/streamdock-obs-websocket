@@ -113,6 +113,24 @@
       "PropertyInspectorPath": "property-inspector.html"
     },
     {
+      "UUID": "local.streamdock.obs.filter",
+      "Name": "Source Filter",
+      "Tooltip": "Enable or disable a configured OBS source filter.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Filter", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
+      "UUID": "local.streamdock.obs.stats",
+      "Name": "Stats",
+      "Tooltip": "Show OBS FPS, CPU, and frame statistics.",
+      "Controllers": ["Keypad"],
+      "Icon": "icons/plugin",
+      "States": [{ "Title": "Stats", "Image": "icons/plugin" }],
+      "PropertyInspectorPath": "property-inspector.html"
+    },
+    {
       "UUID": "local.streamdock.obs.diagnostics",
       "Name": "Diagnostics",
       "Tooltip": "Show OBS connection diagnostics.",
