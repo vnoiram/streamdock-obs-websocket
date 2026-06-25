@@ -19,9 +19,21 @@
       <select id="operation" class="sdpi-item-value">
         <option value="toggle_stream">Toggle stream</option>
         <option value="toggle_record">Toggle record</option>
+        <option value="start_stream">Start stream</option>
+        <option value="stop_stream">Stop stream</option>
+        <option value="start_record">Start record</option>
+        <option value="stop_record">Stop record</option>
         <option value="switch_scene">Switch scene</option>
         <option value="toggle_mute">Toggle source mute</option>
         <option value="volume">Adjust source volume</option>
+        <option value="toggle_visibility">Toggle source visibility</option>
+        <option value="toggle_filter">Set source filter</option>
+        <option value="save_replay">Save replay</option>
+        <option value="studio_transition">Studio transition</option>
+        <option value="switch_scene_collection">Switch collection</option>
+        <option value="switch_profile">Switch profile</option>
+        <option value="meter">Source meter</option>
+        <option value="stats">Stats</option>
       </select>
     </div>
     <div class="sdpi-item">
@@ -51,6 +63,29 @@
       <div class="sdpi-item-label">Profile</div>
       <input id="profileName" class="sdpi-item-value" list="profileList">
       <datalist id="profileList"></datalist>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Filter</div>
+      <input id="filterName" class="sdpi-item-value" placeholder="OBS filter name">
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Filter on</div>
+      <input id="filterEnabled" class="sdpi-checkbox" type="checkbox" checked>
+      <span class="sdpi-status">checked enables, unchecked disables</span>
+    </div>
+    <div class="sdpi-item block">
+      <div class="sdpi-item-label">Connections</div>
+      <textarea id="connectionPresetsJson" class="sdpi-item-value textarea short" placeholder='{"Studio":{"endpoint":"ws://192.168.1.20:4455","password":""}}'></textarea>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Preset</div>
+      <input id="connectionPresetName" class="sdpi-item-value" list="connectionPresetNames" placeholder="Studio">
+      <datalist id="connectionPresetNames"></datalist>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Confirm</div>
+      <input id="confirmDangerous" class="sdpi-checkbox" type="checkbox">
+      <span class="sdpi-status">second press for stop/profile/collection</span>
     </div>
     <div class="sdpi-item">
       <div class="sdpi-item-label">OBS</div>

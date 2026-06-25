@@ -10,7 +10,12 @@
     sceneItemName: '',
     volumeStepDb: 1,
     sceneCollectionName: '',
-    profileName: ''
+    profileName: '',
+    connectionPresetsJson: '',
+    connectionPresetName: '',
+    confirmDangerous: false,
+    filterName: '',
+    filterEnabled: true
   };
 
   var streamDockSocket = null;
@@ -21,7 +26,8 @@
   var contexts = {};
   var pendingRequests = {};
   var requestId = 1;
-  var obsState = { streaming: false, recording: false, levels: {}, currentScene: '', lastError: '' };
+  var obsState = { streaming: false, recording: false, levels: {}, currentScene: '', lastError: '', stats: {} };
+  var confirmUntil = {};
 
   var ACTION_OPERATIONS = {
     'local.streamdock.obs.stream': 'toggle_stream',
@@ -59,7 +65,26 @@
   function contextSettings(context) {
     var contextState = contexts[context] || {};
     var actionDefault = ACTION_OPERATIONS[contextState.action] || DEFAULT_SETTINGS.operation;
-    return Object.assign({}, DEFAULT_SETTINGS, { operation: actionDefault }, contextState.settings || {});
+    return applyConnectionPreset(Object.assign({}, DEFAULT_SETTINGS, { operation: actionDefault }, contextState.settings || {}));
+  }
+
+  function applyConnectionPreset(settings) {
+    if (!settings.connectionPresetsJson || !settings.connectionPresetName) {
+      return settings;
+    }
+    try {
+      var presets = JSON.parse(settings.connectionPresetsJson);
+      var preset = presets && presets[settings.connectionPresetName];
+      if (preset) {
+        return Object.assign({}, settings, preset, {
+          connectionPresetsJson: settings.connectionPresetsJson,
+          connectionPresetName: settings.connectionPresetName
+        });
+      }
+    } catch (error) {
+      return settings;
+    }
+    return settings;
   }
 
   function titleFor(context) {
@@ -68,13 +93,16 @@
       return 'OBS\noffline';
     }
     if (settings.operation === 'diagnostics') {
-      return 'OBS\n' + (identified ? 'ok' : 'offline') + '\n' + (obsState.lastError || settings.endpoint);
+      return 'OBS\n' + (identified ? 'ok' : 'offline') + '\n' + (obsState.lastError || formatStats());
     }
     if (settings.operation === 'switch_scene') {
       return 'Scene\n' + (obsState.currentScene || settings.sceneName || 'unset');
     }
     if (settings.operation === 'toggle_record') {
       return obsState.recording ? 'Record\non' : 'Record\noff';
+    }
+    if (settings.operation === 'stats') {
+      return formatStats();
     }
     if (settings.operation === 'toggle_mute') {
       return 'Mute\n' + (settings.sourceName || 'unset');
@@ -101,6 +129,14 @@
       return 'Profile\n' + (settings.profileName || 'unset');
     }
     return obsState.streaming ? 'Stream\non' : 'Stream\noff';
+  }
+
+  function formatStats() {
+    var stats = obsState.stats || {};
+    var fps = stats.activeFps ? Math.round(stats.activeFps) + 'fps' : '';
+    var cpu = stats.cpuUsage ? Math.round(stats.cpuUsage) + '% CPU' : '';
+    var render = stats.renderTotalFrames ? String(stats.renderTotalFrames) + 'f' : '';
+    return ['Stats', fps || cpu || render || 'waiting', cpu].filter(Boolean).join('\n');
   }
 
   function refreshTitles() {
@@ -160,6 +196,7 @@
           obsState.currentScene = data.currentProgramSceneName || '';
           refreshTitles();
         });
+        pollStats();
         refreshTitles();
       } else if (message.op === 7 && message.d) {
         var handler = pendingRequests[message.d.requestId];
@@ -228,6 +265,17 @@
     }));
   }
 
+  function pollStats() {
+    if (!identified) {
+      return;
+    }
+    obsRequest('GetStats', {}, function (data) {
+      obsState.stats = data || {};
+      refreshTitles();
+    });
+    setTimeout(pollStats, 5000);
+  }
+
   function handleObsEvent(event) {
     if (event.eventType === 'StreamStateChanged') {
       obsState.streaming = !!(event.eventData && event.eventData.outputActive);
@@ -285,10 +333,26 @@
       showAlert(context);
       return;
     }
+    if (settings.operation === 'toggle_filter' && (!settings.sourceName || !settings.filterName)) {
+      showAlert(context);
+      return;
+    }
+    if (needsConfirmation(settings) && !confirmReady(context)) {
+      setTitle(context, 'Press\nagain');
+      return;
+    }
     if (settings.operation === 'switch_scene' && settings.sceneName) {
       obsRequest('SetCurrentProgramScene', { sceneName: settings.sceneName }, function () { showOk(context); });
     } else if (settings.operation === 'toggle_record') {
       obsRequest('ToggleRecord', {}, function () { showOk(context); });
+    } else if (settings.operation === 'start_record') {
+      obsRequest('StartRecord', {}, function () { showOk(context); });
+    } else if (settings.operation === 'stop_record') {
+      obsRequest('StopRecord', {}, function () { showOk(context); });
+    } else if (settings.operation === 'start_stream') {
+      obsRequest('StartStream', {}, function () { showOk(context); });
+    } else if (settings.operation === 'stop_stream') {
+      obsRequest('StopStream', {}, function () { showOk(context); });
     } else if (settings.operation === 'toggle_mute' && settings.sourceName) {
       obsRequest('ToggleInputMute', { inputName: settings.sourceName }, function () { showOk(context); });
     } else if (settings.operation === 'volume' && settings.sourceName) {
@@ -319,11 +383,29 @@
           }, function () { showOk(context); });
         });
       });
+    } else if (settings.operation === 'toggle_filter') {
+      obsRequest('SetSourceFilterEnabled', { sourceName: settings.sourceName, filterName: settings.filterName, filterEnabled: settings.filterEnabled !== false }, function () { showOk(context); });
+    } else if (settings.operation === 'stats') {
+      pollStats();
     } else if (settings.operation === 'meter') {
       obsRequest('GetInputVolume', { inputName: settings.sourceName }, function () { showOk(context); });
     } else {
       obsRequest('ToggleStream', {}, function () { showOk(context); });
     }
+  }
+
+  function needsConfirmation(settings) {
+    return settings.confirmDangerous && /^(stop_stream|stop_record|switch_scene_collection|switch_profile)$/.test(settings.operation);
+  }
+
+  function confirmReady(context) {
+    var now = Date.now();
+    if (confirmUntil[context] && confirmUntil[context] > now) {
+      confirmUntil[context] = 0;
+      return true;
+    }
+    confirmUntil[context] = now + 3000;
+    return false;
   }
 
   function rememberContext(message) {

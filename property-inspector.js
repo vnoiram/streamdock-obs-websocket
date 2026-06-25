@@ -12,7 +12,12 @@
     sceneItemName: '',
     volumeStepDb: 1,
     sceneCollectionName: '',
-    profileName: ''
+    profileName: '',
+    connectionPresetsJson: '',
+    connectionPresetName: '',
+    confirmDangerous: false,
+    filterName: '',
+    filterEnabled: true
   };
   var ACTION_OPERATIONS = {
     'local.streamdock.obs.stream': 'toggle_stream',
@@ -47,6 +52,11 @@
     settings.volumeStepDb = Number(byId('volumeStepDb').value) || 1;
     settings.sceneCollectionName = byId('sceneCollectionName').value.trim();
     settings.profileName = byId('profileName').value.trim();
+    settings.connectionPresetsJson = byId('connectionPresetsJson').value.trim();
+    settings.connectionPresetName = byId('connectionPresetName').value.trim();
+    settings.confirmDangerous = byId('confirmDangerous').checked;
+    settings.filterName = byId('filterName').value.trim();
+    settings.filterEnabled = byId('filterEnabled').checked;
     websocket.send(JSON.stringify({ event: 'setSettings', context: context, payload: settings }));
   }
 
@@ -152,9 +162,37 @@
     settings = Object.assign({}, settings, next || {});
     Object.keys(settings).forEach(function (key) {
       if (byId(key)) {
-        byId(key).value = settings[key];
+        if (byId(key).type === 'checkbox') {
+          byId(key).checked = settings[key] === true || settings[key] === 'true';
+        } else {
+          byId(key).value = settings[key];
+        }
       }
     });
+    renderConnectionPresetNames();
+  }
+
+  function connectionPresets() {
+    if (!settings.connectionPresetsJson) {
+      return {};
+    }
+    var parsed = JSON.parse(settings.connectionPresetsJson);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  }
+
+  function renderConnectionPresetNames() {
+    var list = byId('connectionPresetNames');
+    if (!list) return;
+    list.innerHTML = '';
+    try {
+      Object.keys(connectionPresets()).forEach(function (name) {
+        var option = document.createElement('option');
+        option.value = name;
+        list.appendChild(option);
+      });
+    } catch (error) {
+      setStatus('invalid connection presets');
+    }
   }
 
   function exportSettings() {
@@ -198,8 +236,11 @@
   };
 
   window.addEventListener('DOMContentLoaded', function () {
-    ['endpoint', 'password', 'operation', 'sceneName', 'sourceName', 'sceneItemName', 'volumeStepDb', 'sceneCollectionName', 'profileName'].forEach(function (id) {
+    ['endpoint', 'password', 'operation', 'sceneName', 'sourceName', 'sceneItemName', 'volumeStepDb', 'sceneCollectionName', 'profileName', 'connectionPresetsJson', 'connectionPresetName', 'filterName'].forEach(function (id) {
       byId(id).addEventListener('input', update);
+      byId(id).addEventListener('change', update);
+    });
+    ['confirmDangerous', 'filterEnabled'].forEach(function (id) {
       byId(id).addEventListener('change', update);
     });
     byId('refreshObs').addEventListener('click', refreshObsLists);

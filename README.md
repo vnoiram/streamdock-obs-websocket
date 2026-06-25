@@ -32,6 +32,10 @@ Actions:
 - Scene Collection
 - Profile
 - Diagnostics
+- Stats display
+- Explicit start/stop stream and recording operations
+- Source filter enable/disable
+- Optional connection presets and second-press confirmation for dangerous operations
 
 The plugin speaks OBS WebSocket v5 directly from the Stream Dock plugin runtime. It handles the OBS `Hello` and `Identify` flow and computes authentication when a password is configured.
 
@@ -49,6 +53,10 @@ Implemented operations:
 - `TriggerStudioModeTransition`
 - `SetCurrentSceneCollection`
 - `SetCurrentProfile`
+- `GetStats`
+- `StartStream` / `StopStream`
+- `StartRecord` / `StopRecord`
+- `SetSourceFilterEnabled`
 
 ## Repository Layout
 

@@ -39,3 +39,21 @@ body {
   color: #c9c9c9;
   flex: 1;
 }
+
+.sdpi-checkbox {
+  accent-color: #4dd0e1;
+  flex: 0 0 auto;
+}
+
+.block {
+  align-items: flex-start;
+}
+
+.textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.short {
+  min-height: 48px;
+}
