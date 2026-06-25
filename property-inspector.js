@@ -43,6 +43,12 @@
   var obsSocket = null;
   var obsRequestId = 1;
   var obsLists = { scenes: [], sources: [], sceneItems: [], collections: [], profiles: [], filters: [] };
+  var SETTING_KEYS = [
+    'endpoint', 'password', 'savePassword', 'operation', 'sceneName', 'sourceName', 'sceneItemName',
+    'volumeStepDb', 'sceneCollectionName', 'profileName', 'connectionPresetsJson',
+    'connectionPresetName', 'confirmDangerous', 'filterName', 'filterEnabled',
+    'visibilityMode', 'volumeSetDb', 'transitionName'
+  ];
 
   function byId(id) {
     return document.getElementById(id);
@@ -248,7 +254,7 @@
   }
 
   function applySettings(next) {
-    settings = Object.assign({}, settings, next || {});
+    settings = mergeKnownSettings(copySettings(settings), next || {});
     Object.keys(settings).forEach(function (key) {
       if (byId(key)) {
         if (byId(key).type === 'checkbox') {
@@ -267,6 +273,20 @@
       setTimeout(refreshObsLists, 100);
     }
     renderEndpointStatus();
+  }
+
+  function copySettings(source) {
+    var out = {};
+    return mergeKnownSettings(out, source || {});
+  }
+
+  function mergeKnownSettings(target, source) {
+    SETTING_KEYS.forEach(function (key) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    });
+    return target;
   }
 
   function connectionPresets() {

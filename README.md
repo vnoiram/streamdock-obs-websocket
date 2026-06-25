@@ -5,7 +5,7 @@ Mirabox Stream Dock JavaScript/HTML plugin for controlling OBS on another PC thr
 Initial target endpoint format:
 
 ```text
-ws://<OBS-PC-IP>:4455
+wss://<OBS-PC-IP>:4455
 ```
 
 ## Version
@@ -117,9 +117,9 @@ npm run release:zip
 1. On the OBS PC, enable OBS WebSocket.
 2. Confirm the WebSocket port, normally `4455`.
 3. Set a WebSocket password if desired.
-4. Ensure the Stream Dock PC can reach `ws://<OBS-PC-IP>:4455`.
+4. Ensure the Stream Dock PC can reach the OBS WebSocket endpoint, preferably `wss://<OBS-PC-IP>:4455` when TLS is available.
 5. In the Property Inspector, set:
-   - `Endpoint`: `ws://<OBS-PC-IP>:4455`
+   - `Endpoint`: `wss://<OBS-PC-IP>:4455` for TLS, or the local/trusted-network OBS WebSocket URL when TLS is unavailable.
    - `Password`: OBS WebSocket password, if configured. It is not stored unless `Store pass` is checked.
    - `Operation`: stream, record, scene, mute, or volume.
    - `Scene` or `Source`: required for scene/source operations.

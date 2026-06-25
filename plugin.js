@@ -34,6 +34,12 @@
   var confirmUntil = {};
   var statsTimer = null;
   var titleTimer = null;
+  var SETTING_KEYS = [
+    'endpoint', 'password', 'savePassword', 'operation', 'sceneName', 'sourceName', 'sceneItemName',
+    'volumeStepDb', 'sceneCollectionName', 'profileName', 'connectionPresetsJson',
+    'connectionPresetName', 'confirmDangerous', 'filterName', 'filterEnabled',
+    'visibilityMode', 'volumeSetDb', 'transitionName'
+  ];
 
   var ACTION_OPERATIONS = {
     'local.streamdock.obs.stream': 'toggle_stream',
@@ -79,7 +85,10 @@
   function contextSettings(context) {
     var contextState = contexts[context] || {};
     var actionDefault = ACTION_OPERATIONS[contextState.action] || DEFAULT_SETTINGS.operation;
-    return applyConnectionPreset(Object.assign({}, DEFAULT_SETTINGS, { operation: actionDefault }, contextState.settings || {}));
+    var base = copySettings(DEFAULT_SETTINGS);
+    base.operation = actionDefault;
+    mergeKnownSettings(base, contextState.settings || {});
+    return applyConnectionPreset(base);
   }
 
   function applyConnectionPreset(settings) {
@@ -90,15 +99,31 @@
       var presets = JSON.parse(settings.connectionPresetsJson);
       var preset = presets && presets[settings.connectionPresetName];
       if (preset) {
-        return Object.assign({}, settings, preset, {
-          connectionPresetsJson: settings.connectionPresetsJson,
-          connectionPresetName: settings.connectionPresetName
-        });
+        var merged = copySettings(settings);
+        mergeKnownSettings(merged, preset);
+        merged.connectionPresetsJson = settings.connectionPresetsJson;
+        merged.connectionPresetName = settings.connectionPresetName;
+        return merged;
       }
     } catch (error) {
       return settings;
     }
     return settings;
+  }
+
+  function copySettings(source) {
+    var out = {};
+    mergeKnownSettings(out, source || {});
+    return out;
+  }
+
+  function mergeKnownSettings(target, source) {
+    SETTING_KEYS.forEach(function (key) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    });
+    return target;
   }
 
   function titleFor(context) {
