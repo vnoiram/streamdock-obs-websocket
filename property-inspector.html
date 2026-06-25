@@ -15,6 +15,11 @@
       <input id="password" class="sdpi-item-value" type="password">
     </div>
     <div class="sdpi-item">
+      <div class="sdpi-item-label">Store pass</div>
+      <input id="savePassword" class="sdpi-checkbox" type="checkbox">
+      <span class="sdpi-status">copy/export always removes it</span>
+    </div>
+    <div class="sdpi-item">
       <div class="sdpi-item-label">Operation</div>
       <select id="operation" class="sdpi-item-value">
         <option value="toggle_stream">Toggle stream</option>
@@ -96,7 +101,7 @@
     </div>
     <div class="sdpi-item block">
       <div class="sdpi-item-label">Connections</div>
-      <textarea id="connectionPresetsJson" class="sdpi-item-value textarea short" placeholder='{"Studio":{"endpoint":"ws://192.168.1.20:4455","password":""}}'></textarea>
+      <textarea id="connectionPresetsJson" class="sdpi-item-value textarea short" placeholder='{"Studio":{"endpoint":"ws://192.168.1.20:4455"}}'></textarea>
     </div>
     <div class="sdpi-item">
       <div class="sdpi-item-label">Preset</div>

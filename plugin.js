@@ -4,6 +4,7 @@
   var DEFAULT_SETTINGS = {
     endpoint: 'ws://127.0.0.1:4455',
     password: '',
+    savePassword: false,
     operation: 'toggle_stream',
     sceneName: '',
     sourceName: '',

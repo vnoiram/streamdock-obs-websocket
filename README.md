@@ -120,11 +120,11 @@ npm run release:zip
 4. Ensure the Stream Dock PC can reach `ws://<OBS-PC-IP>:4455`.
 5. In the Property Inspector, set:
    - `Endpoint`: `ws://<OBS-PC-IP>:4455`
-   - `Password`: OBS WebSocket password, if configured.
+   - `Password`: OBS WebSocket password, if configured. It is not stored unless `Store pass` is checked.
    - `Operation`: stream, record, scene, mute, or volume.
    - `Scene` or `Source`: required for scene/source operations.
 6. Use the Property Inspector's `Refresh` button to fetch current OBS scenes, scene items, inputs, profiles, collections, and source filters for autocomplete. The Property Inspector also attempts this sync when opened.
-7. Use `Copy` / `Paste` in the Property Inspector to duplicate a configured OBS action to another key without exporting a file.
+7. Use `Copy` / `Paste` in the Property Inspector to duplicate a configured OBS action to another key without exporting a file. `Copy` and `Export` remove OBS passwords from the copied JSON and from connection presets.
 
 The plugin subscribes to OBS events and reflects stream/record state. Stream and record keys show elapsed time, using OBS output duration when available. The Source Meter action shows a simple level percentage when OBS sends input meter events.
 

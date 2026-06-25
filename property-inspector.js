@@ -6,6 +6,7 @@
   var settings = {
     endpoint: 'ws://127.0.0.1:4455',
     password: '',
+    savePassword: false,
     operation: 'toggle_stream',
     sceneName: '',
     sourceName: '',
@@ -52,7 +53,8 @@
       return;
     }
     settings.endpoint = byId('endpoint').value.trim();
-    settings.password = byId('password').value;
+    settings.savePassword = byId('savePassword').checked;
+    settings.password = settings.savePassword ? byId('password').value : '';
     settings.operation = byId('operation').value;
     settings.sceneName = byId('sceneName').value.trim();
     settings.sourceName = byId('sourceName').value.trim();
@@ -137,8 +139,9 @@
         var identify = function () {
           obsSocket.send(JSON.stringify({ op: 1, d: payload }));
         };
-        if (auth && settings.password) {
-          obsAuth(settings.password, auth.challenge, auth.salt).then(function (authentication) {
+        var password = byId('password').value || settings.password;
+        if (auth && password) {
+          obsAuth(password, auth.challenge, auth.salt).then(function (authentication) {
             payload.authentication = authentication;
             identify();
           });
@@ -226,6 +229,10 @@
       }
     });
     renderConnectionPresetNames();
+    if (settings.password && settings.savePassword !== true && settings.savePassword !== 'true') {
+      settings.savePassword = true;
+      byId('savePassword').checked = true;
+    }
     if (settings.endpoint) {
       setTimeout(refreshObsLists, 100);
     }
@@ -255,7 +262,8 @@
   }
 
   function exportSettings() {
-    var blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+    update();
+    var blob = new Blob([JSON.stringify(sanitizedSettings(settings), null, 2)], { type: 'application/json' });
     var link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'streamdock-obs-settings.json';
@@ -274,11 +282,32 @@
 
   function copySettings() {
     update();
-    navigator.clipboard.writeText(JSON.stringify(settings, null, 2)).then(function () {
+    navigator.clipboard.writeText(JSON.stringify(sanitizedSettings(settings), null, 2)).then(function () {
       setStatus('settings copied');
     }).catch(function () {
       setStatus('copy failed');
     });
+  }
+
+  function sanitizedSettings(source) {
+    var copy = Object.assign({}, source || {});
+    copy.password = '';
+    copy.savePassword = false;
+    if (copy.connectionPresetsJson) {
+      try {
+        var presets = JSON.parse(copy.connectionPresetsJson);
+        Object.keys(presets || {}).forEach(function (name) {
+          if (presets[name] && typeof presets[name] === 'object') {
+            presets[name].password = '';
+            presets[name].savePassword = false;
+          }
+        });
+        copy.connectionPresetsJson = JSON.stringify(presets, null, 2);
+      } catch (error) {
+        copy.connectionPresetsJson = '';
+      }
+    }
+    return copy;
   }
 
   function pasteSettings() {
@@ -328,7 +357,7 @@
       renderList('sceneItemList', []);
       refreshObsLists();
     });
-    ['confirmDangerous', 'filterEnabled'].forEach(function (id) {
+    ['confirmDangerous', 'filterEnabled', 'savePassword'].forEach(function (id) {
       byId(id).addEventListener('change', update);
     });
     byId('refreshObs').addEventListener('click', refreshObsLists);
