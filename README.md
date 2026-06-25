@@ -126,6 +126,8 @@ npm run release:zip
 6. Use the Property Inspector's `Refresh` button to fetch current OBS scenes, scene items, inputs, profiles, collections, and source filters for autocomplete. The Property Inspector also attempts this sync when opened.
 7. Use `Copy` / `Paste` in the Property Inspector to duplicate a configured OBS action to another key without exporting a file. `Copy` and `Export` remove OBS passwords from the copied JSON and from connection presets.
 
+The Property Inspector warns when the OBS endpoint points at another machine, and especially when a remote endpoint has no password entered. For remote OBS control, keep the OBS WebSocket port firewalled to trusted clients.
+
 The plugin subscribes to OBS events and reflects stream/record state. Stream and record keys show elapsed time, using OBS output duration when available. The Source Meter action shows a simple level percentage when OBS sends input meter events.
 
 For Source Visibility, set `Scene` first, then press `Refresh`. The `Scene item` field is populated from `GetSceneItemList` for that scene, which helps avoid accidentally selecting a source that is not in the scene.

@@ -71,10 +71,40 @@
     settings.volumeSetDb = byId('volumeSetDb').value;
     settings.transitionName = byId('transitionName').value.trim();
     websocket.send(JSON.stringify({ event: 'setSettings', context: context, payload: settings }));
+    renderEndpointStatus();
   }
 
   function setStatus(text) {
     byId('status').textContent = text;
+  }
+
+  function renderEndpointStatus() {
+    var status = byId('endpointStatus');
+    if (!status) return;
+    var endpoint = byId('endpoint').value.trim();
+    var password = byId('password').value || settings.password;
+    if (!endpoint) {
+      status.textContent = 'missing OBS endpoint';
+      return;
+    }
+    if (!/^wss?:\/\//i.test(endpoint)) {
+      status.textContent = 'invalid WebSocket endpoint';
+      return;
+    }
+    if (isLoopbackEndpoint(endpoint)) {
+      status.textContent = password ? 'local OBS with password' : 'local OBS';
+      return;
+    }
+    status.textContent = password ? 'remote OBS: restrict firewall' : 'remote OBS without password';
+  }
+
+  function isLoopbackEndpoint(endpoint) {
+    try {
+      var url = new URL(endpoint);
+      return ['localhost', '127.0.0.1', '::1', '[::1]'].indexOf(url.hostname) !== -1;
+    } catch (error) {
+      return false;
+    }
   }
 
   function textToBase64(buffer) {
@@ -236,6 +266,7 @@
     if (settings.endpoint) {
       setTimeout(refreshObsLists, 100);
     }
+    renderEndpointStatus();
   }
 
   function connectionPresets() {
@@ -365,5 +396,6 @@
     byId('pasteSettings').addEventListener('click', pasteSettings);
     byId('exportSettings').addEventListener('click', exportSettings);
     byId('importSettings').addEventListener('change', importSettings);
+    renderEndpointStatus();
   });
 }());
