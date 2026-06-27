@@ -253,8 +253,91 @@
     setStatus(warnings.length ? warnings.join(', ') : 'lists loaded');
   }
 
+  function repairNames() {
+    var changed = [];
+    changed = changed.concat(repairField('sceneName', obsLists.scenes));
+    changed = changed.concat(repairField('sourceName', obsLists.sources));
+    changed = changed.concat(repairField('sceneItemName', obsLists.sceneItems.length ? obsLists.sceneItems : obsLists.sources));
+    changed = changed.concat(repairField('sceneCollectionName', obsLists.collections));
+    changed = changed.concat(repairField('profileName', obsLists.profiles));
+    changed = changed.concat(repairField('filterName', obsLists.filters));
+    if (changed.length) {
+      update();
+      setStatus('repaired ' + changed.join(', '));
+    } else {
+      setStatus('no repair candidates');
+    }
+  }
+
+  function repairField(id, values) {
+    var current = byId(id).value.trim();
+    if (!current || !values || values.indexOf(current) !== -1) {
+      return [];
+    }
+    var best = closest(current, values);
+    if (best) {
+      byId(id).value = best;
+      return [id];
+    }
+    return [];
+  }
+
+  function closest(value, values) {
+    var best = '';
+    var bestScore = Infinity;
+    values.forEach(function (candidate) {
+      var score = distance(String(value).toLowerCase(), String(candidate).toLowerCase());
+      if (score < bestScore) {
+        bestScore = score;
+        best = candidate;
+      }
+    });
+    return bestScore <= Math.max(3, Math.ceil(String(value).length / 3)) ? best : '';
+  }
+
+  function distance(a, b) {
+    var dp = [];
+    for (var i = 0; i <= a.length; i += 1) dp[i] = [i];
+    for (var j = 1; j <= b.length; j += 1) dp[0][j] = j;
+    for (var x = 1; x <= a.length; x += 1) {
+      for (var y = 1; y <= b.length; y += 1) {
+        dp[x][y] = Math.min(dp[x - 1][y] + 1, dp[x][y - 1] + 1, dp[x - 1][y - 1] + (a[x - 1] === b[y - 1] ? 0 : 1));
+      }
+    }
+    return dp[a.length][b.length];
+  }
+
+  function preflightCheck() {
+    var checks = [];
+    checks.push(isLoopbackEndpoint(byId('endpoint').value) || byId('password').value ? 'endpoint ok' : 'remote no password');
+    checks.push(obsLists.scenes.length ? 'scenes ok' : 'refresh scenes');
+    checks.push(obsLists.sources.length ? 'sources ok' : 'refresh sources');
+    if (byId('sceneName').value && obsLists.scenes.indexOf(byId('sceneName').value) === -1) checks.push('scene missing');
+    if (byId('sourceName').value && obsLists.sources.indexOf(byId('sourceName').value) === -1) checks.push('source missing');
+    setStatus(checks.join(', '));
+  }
+
+  function diagnoseSettings() {
+    var issues = [];
+    if (!byId('endpoint').value.trim()) issues.push('missing endpoint');
+    if (!/^wss?:\/\//i.test(byId('endpoint').value.trim())) issues.push('invalid endpoint');
+    if (!isLoopbackEndpoint(byId('endpoint').value.trim()) && !byId('password').value && !settings.password) issues.push('remote no password');
+    try {
+      connectionPresets();
+    } catch (error) {
+      issues.push('invalid presets');
+    }
+    setStatus(issues.join(', ') || 'diagnostics ok');
+  }
+
+  function resetSettings() {
+    applySettings({ endpoint: 'ws://127.0.0.1:4455', password: '', savePassword: false, operation: 'toggle_stream', sceneName: '', sourceName: '', sceneItemName: '', volumeStepDb: 1, sceneCollectionName: '', profileName: '', connectionPresetsJson: '', connectionPresetName: '', confirmDangerous: false, filterName: '', filterEnabled: true, visibilityMode: 'toggle', volumeSetDb: '', transitionName: '' });
+    update();
+    setStatus('settings reset');
+  }
+
   function applySettings(next) {
-    settings = mergeKnownSettings(copySettings(settings), next || {});
+    settings = mergeKnownSettings(copyKnownSettings(settings), next || {});
     Object.keys(settings).forEach(function (key) {
       if (byId(key)) {
         if (byId(key).type === 'checkbox') {
@@ -275,7 +358,7 @@
     renderEndpointStatus();
   }
 
-  function copySettings(source) {
+  function copyKnownSettings(source) {
     var out = {};
     return mergeKnownSettings(out, source || {});
   }
@@ -412,6 +495,10 @@
       byId(id).addEventListener('change', update);
     });
     byId('refreshObs').addEventListener('click', refreshObsLists);
+    byId('repairNames').addEventListener('click', repairNames);
+    byId('preflightCheck').addEventListener('click', preflightCheck);
+    byId('diagnoseSettings').addEventListener('click', diagnoseSettings);
+    byId('resetSettings').addEventListener('click', resetSettings);
     byId('copySettings').addEventListener('click', copySettings);
     byId('pasteSettings').addEventListener('click', pasteSettings);
     byId('exportSettings').addEventListener('click', exportSettings);

@@ -44,6 +44,7 @@ Actions:
 - Stream and record actions show elapsed time while active.
 - Added virtual camera toggle, studio mode toggle, forced show/hide visibility modes, absolute source-volume setting, and named studio transition triggering.
 - Property Inspector auto-syncs OBS lists when opened, fetches scene items for the selected scene, fetches source filters for the selected source, and warns when configured scene/source/item/filter/profile/collection names are missing from the current OBS lists.
+- Property Inspector `Repair`, `Preflight`, `Diagnose`, and `Reset` help recover renamed OBS scenes/sources and validate remote endpoint safety.
 - Added Property Inspector `Copy` / `Paste` for quickly duplicating action settings between keys.
 
 The plugin speaks OBS WebSocket v5 directly from the Stream Dock plugin runtime. It handles the OBS `Hello` and `Identify` flow and computes authentication when a password is configured.
