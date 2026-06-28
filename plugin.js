@@ -134,6 +134,9 @@
     if (settings.operation === 'diagnostics') {
       return 'OBS\n' + (identified ? 'ok' : 'offline') + '\n' + (obsState.lastError || formatStats());
     }
+    if (settings.operation === 'toggle_stream' && obsState.streaming && obsState.recording) {
+      return 'LIVE+REC\n' + formatElapsed(obsState.streamStartedAt);
+    }
     if (settings.operation === 'switch_scene') {
       return 'Scene\n' + (obsState.currentScene || settings.sceneName || 'unset');
     }
@@ -176,6 +179,9 @@
     if (settings.operation === 'toggle_stream' || settings.operation === 'start_stream' || settings.operation === 'stop_stream') {
       return obsState.streaming ? 'Stream\n' + formatElapsed(obsState.streamStartedAt) : 'Stream\noff';
     }
+    if (obsState.streaming && obsState.recording) {
+      return 'LIVE+REC\n' + formatElapsed(obsState.streamStartedAt);
+    }
     return obsState.streaming ? 'Stream\n' + formatElapsed(obsState.streamStartedAt) : 'Stream\noff';
   }
 
@@ -216,6 +222,9 @@
     }
     if (settings.operation === 'toggle_record' || settings.operation === 'start_record' || settings.operation === 'stop_record') {
       return svgImage(obsState.recording ? '#b4232a' : '#383838', '#ffffff', 'REC', obsState.recording ? 'ON' : 'OFF', obsState.recording ? 100 : 0);
+    }
+    if (obsState.streaming && obsState.recording) {
+      return svgImage('#8a1f2d', '#ffffff', 'LIVE', 'REC', 100);
     }
     if (settings.operation === 'toggle_mute') {
       return svgImage('#283745', '#ffffff', obsState.lastMute ? 'MUTE' : 'AUD', settings.sourceName || '', obsState.lastMute ? 100 : 0);
