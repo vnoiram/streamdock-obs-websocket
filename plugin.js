@@ -27,6 +27,7 @@
   var obsSocket = null;
   var identified = false;
   var reconnectTimer = null;
+  var reconnectDelay = 3000;
   var contexts = {};
   var pendingRequests = {};
   var requestId = 1;
@@ -106,6 +107,7 @@
         return merged;
       }
     } catch (error) {
+      logMessage('connectionPresetsJson parse error: ' + (error && error.message || error));
       return settings;
     }
     return settings;
@@ -300,6 +302,7 @@
         identify(settings, message.d || {});
       } else if (message.op === 2) {
         identified = true;
+        reconnectDelay = 3000;
         obsState.lastError = '';
         obsRequest('GetStreamStatus', {}, function (data) {
           updateOutputState('stream', !!data.outputActive, outputDurationMs(data));
@@ -347,9 +350,12 @@
       obsState.lastError = 'connection closed';
       logMessage('connection closed');
       refreshTitles();
+      clearTimeout(reconnectTimer);
+      var delay = reconnectDelay;
+      reconnectDelay = Math.min(30000, reconnectDelay * 2);
       reconnectTimer = setTimeout(function () {
         connectObs(settings);
-      }, 3000);
+      }, delay);
     };
 
     obsSocket.onerror = function () {
@@ -380,6 +386,9 @@
     if (!obsSocket || obsSocket.readyState !== WebSocket.OPEN || !identified) {
       refreshTitles();
       return;
+    }
+    if (requestId >= 2000000000) {
+      requestId = 1;
     }
     var id = String(requestId++);
     pendingRequests[id] = typeof onSuccess === 'function' ? onSuccess : null;
@@ -464,7 +473,7 @@
     if (event.eventType === 'InputVolumeMeters' && event.eventData && Array.isArray(event.eventData.inputs)) {
       event.eventData.inputs.forEach(function (input) {
         var level = 0;
-        if (Array.isArray(input.inputLevelsMul) && input.inputLevelsMul[0]) {
+        if (Array.isArray(input.inputLevelsMul) && Array.isArray(input.inputLevelsMul[0]) && input.inputLevelsMul[0].length > 0) {
           level = Math.max.apply(Math, input.inputLevelsMul[0]) * 100;
         }
         obsState.levels[input.inputName] = level;
