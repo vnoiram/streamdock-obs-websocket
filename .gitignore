@@ -1,3 +1,7 @@
 node_modules/
 dist/
 *.sdPlugin/
+.env
+.env.*
+!.env.example
+*.log
