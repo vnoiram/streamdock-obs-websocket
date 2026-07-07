@@ -2,7 +2,7 @@
   "Name": "Stream Dock OBS WebSocket",
   "Description": "Control OBS on another PC through OBS WebSocket.",
   "Author": "local",
-  "Version": "0.2.1",
+  "Version": "0.2.2",
   "CodePath": "plugin.html",
   "Icon": "icons/plugin",
   "Category": "OBS-Streaming",
