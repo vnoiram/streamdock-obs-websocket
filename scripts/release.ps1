@@ -3,6 +3,7 @@ $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $Root
 
 npm run package
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $Manifest = Get-Content "manifest.json" -Raw | ConvertFrom-Json
 $ReleaseDir = Join-Path $Root "dist/release"

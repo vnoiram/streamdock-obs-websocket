@@ -114,16 +114,11 @@ if (-not $PackageDir) {
 }
 
 $PluginName = Split-Path -Leaf $PackageDir
-$PackageParent = Split-Path -Parent $PackageDir
-$ExtraHelperDir = Join-Path $PackageParent "helper"
 $InstallRoot = Resolve-PluginRoot $PluginRoot
 $Target = Join-Path $InstallRoot $PluginName
 
 if ($DryRun) {
   Write-Host "Dry run: would install '$PackageDir' to '$Target'."
-  if (Test-Path $ExtraHelperDir) {
-    Write-Host "Dry run: would copy '$ExtraHelperDir' to '$Target\helper'."
-  }
   exit 0
 }
 
@@ -135,9 +130,6 @@ if ((Test-Path $Target) -and $PSCmdlet.ShouldProcess($Target, "Remove existing p
 }
 if ($PSCmdlet.ShouldProcess($Target, "Install plugin")) {
   Copy-Item -Recurse -Force $PackageDir $Target
-}
-if ((Test-Path $ExtraHelperDir) -and $PSCmdlet.ShouldProcess((Join-Path $Target "helper"), "Install bundled helper")) {
-  Copy-Item -Recurse -Force $ExtraHelperDir (Join-Path $Target "helper")
 }
 
 Write-Host "Installed $PluginName to $Target"

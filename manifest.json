@@ -5,7 +5,7 @@
   "Version": "0.2.1",
   "CodePath": "plugin.html",
   "Icon": "icons/plugin",
-  "Category": "Streaming",
+  "Category": "OBS-Streaming",
   "OS": [
     {
       "Platform": "windows",
