@@ -3,6 +3,7 @@
 
   var websocket = null;
   var context = null;
+  var currentAction = '';
   var settings = {
     endpoint: 'ws://127.0.0.1:4455',
     password: '',
@@ -49,6 +50,25 @@
     'connectionPresetName', 'confirmDangerous', 'filterName', 'filterEnabled',
     'visibilityMode', 'volumeSetDb', 'transitionName'
   ];
+  var COMMON_FIELDS = ['endpoint', 'password', 'savePassword', 'connectionPresetsJson', 'connectionPresetName', 'refreshObs', 'repairNames', 'preflightCheck', 'diagnoseSettings', 'resetSettings', 'copySettings', 'pasteSettings', 'exportSettings', 'copyDiagnostics', 'importSettings'];
+  var OPERATION_FIELDS = {
+    toggle_stream: [],
+    toggle_record: [],
+    switch_scene: ['sceneName'],
+    toggle_mute: ['sourceName'],
+    volume: ['sourceName', 'volumeStepDb'],
+    set_volume: ['sourceName', 'volumeSetDb'],
+    save_replay: [],
+    toggle_visibility: ['sceneName', 'sourceName', 'sceneItemName', 'visibilityMode'],
+    studio_transition: ['transitionName'],
+    switch_scene_collection: ['sceneCollectionName', 'confirmDangerous'],
+    switch_profile: ['profileName', 'confirmDangerous'],
+    meter: ['sourceName'],
+    toggle_filter: ['sourceName', 'filterName', 'filterEnabled'],
+    stats: [],
+    toggle_virtual_camera: [],
+    toggle_studio_mode: []
+  };
 
   function byId(id) {
     return document.getElementById(id);
@@ -61,7 +81,8 @@
     settings.endpoint = byId('endpoint').value.trim();
     settings.savePassword = byId('savePassword').checked;
     settings.password = settings.savePassword ? byId('password').value : '';
-    settings.operation = byId('operation').value;
+    settings.operation = fixedOperation();
+    byId('operation').value = settings.operation;
     settings.sceneName = byId('sceneName').value.trim();
     settings.sourceName = byId('sourceName').value.trim();
     settings.sceneItemName = byId('sceneItemName').value.trim();
@@ -78,11 +99,42 @@
     settings.transitionName = byId('transitionName').value.trim();
     websocket.send(JSON.stringify({ event: 'setSettings', context: context, payload: settings }));
     renderEndpointStatus();
+    applyVisibility();
   }
 
   function setStatus(text) {
     byId('status').textContent = text;
     appendDiagnostics(text);
+  }
+
+  function rowFor(id) {
+    var element = byId(id);
+    while (element && element !== document.body) {
+      if (element.classList && element.classList.contains('sdpi-item')) return element;
+      element = element.parentNode;
+    }
+    return null;
+  }
+
+  function setFieldVisible(id, visible) {
+    var row = rowFor(id);
+    if (row) row.classList.toggle('is-hidden', !visible);
+  }
+
+  function fixedOperation() {
+    return ACTION_OPERATIONS[currentAction] || settings.operation || 'toggle_stream';
+  }
+
+  function applyVisibility() {
+    var operation = fixedOperation();
+    var visible = {};
+    COMMON_FIELDS.concat(OPERATION_FIELDS[operation] || []).forEach(function (id) {
+      visible[id] = true;
+    });
+    SETTING_KEYS.concat(['refreshObs', 'repairNames', 'preflightCheck', 'diagnoseSettings', 'resetSettings', 'copySettings', 'pasteSettings', 'exportSettings', 'copyDiagnostics', 'importSettings']).forEach(function (id) {
+      setFieldVisible(id, !!visible[id]);
+    });
+    setFieldVisible('operation', false);
   }
 
   function renderEndpointStatus() {
@@ -339,6 +391,7 @@
 
   function applySettings(next) {
     settings = mergeKnownSettings(copyKnownSettings(settings), next || {});
+    settings.operation = fixedOperation();
     Object.keys(settings).forEach(function (key) {
       if (byId(key)) {
         if (byId(key).type === 'checkbox') {
@@ -357,6 +410,7 @@
       setTimeout(refreshObsLists, 100);
     }
     renderEndpointStatus();
+    applyVisibility();
   }
 
   function copyKnownSettings(source) {
@@ -505,6 +559,7 @@
   window.connectElgatoStreamDeckSocket = function (port, uuid, registerEvent, info, actionInfo) {
     var parsedActionInfo = JSON.parse(actionInfo || '{}');
     context = parsedActionInfo.context || uuid;
+    currentAction = parsedActionInfo.action || '';
     if (ACTION_OPERATIONS[parsedActionInfo.action]) {
       settings.operation = ACTION_OPERATIONS[parsedActionInfo.action];
       if (byId('operation')) {
@@ -553,5 +608,6 @@
     byId('copyDiagnostics').addEventListener('click', copyDiagnostics);
     byId('importSettings').addEventListener('change', importSettings);
     renderEndpointStatus();
+    applyVisibility();
   });
 }());
