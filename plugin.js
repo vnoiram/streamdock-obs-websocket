@@ -28,6 +28,7 @@
   var identified = false;
   var reconnectTimer = null;
   var reconnectDelay = 3000;
+  var activeSettings = null;
   var contexts = {};
   var pendingRequests = {};
   var requestId = 1;
@@ -192,7 +193,9 @@
     var fps = stats.activeFps ? Math.round(stats.activeFps) + 'fps' : '';
     var cpu = stats.cpuUsage ? Math.round(stats.cpuUsage) + '% CPU' : '';
     var render = stats.renderTotalFrames ? String(stats.renderTotalFrames) + 'f' : '';
-    return ['Stats', fps || cpu || render || 'waiting', cpu].filter(Boolean).join('\n');
+    var primary = fps || cpu || render || 'waiting';
+    var secondary = fps ? cpu : (cpu ? render : '');
+    return ['Stats', primary, secondary].filter(Boolean).join('\n');
   }
 
   function formatElapsed(startedAt) {
@@ -290,10 +293,20 @@
   function connectObs(settings) {
     settings = Object.assign({}, DEFAULT_SETTINGS, settings || {});
     if (obsSocket && (obsSocket.readyState === WebSocket.OPEN || obsSocket.readyState === WebSocket.CONNECTING)) {
-      return;
+      if (activeSettings && activeSettings.endpoint === settings.endpoint && activeSettings.password === settings.password) {
+        activeSettings = settings;
+        return;
+      }
+      var staleSocket = obsSocket;
+      staleSocket.onclose = null;
+      staleSocket.onerror = null;
+      staleSocket.onmessage = null;
+      staleSocket.close();
+      obsSocket = null;
     }
     clearTimeout(reconnectTimer);
     identified = false;
+    activeSettings = settings;
     obsSocket = new WebSocket(settings.endpoint);
 
     obsSocket.onmessage = function (event) {
@@ -354,7 +367,7 @@
       var delay = reconnectDelay;
       reconnectDelay = Math.min(30000, reconnectDelay * 2);
       reconnectTimer = setTimeout(function () {
-        connectObs(settings);
+        connectObs(activeSettings || settings);
       }, delay);
     };
 
