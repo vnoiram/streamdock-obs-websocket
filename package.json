@@ -1,6 +1,6 @@
 {
   "name": "streamdock-obs-websocket",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "private": true,
   "scripts": {
     "check": "node --check plugin.js && node --check property-inspector.js && node --check scripts/package-plugin.js && node --check scripts/release-auto.js && node -e \"JSON.parse(require('fs').readFileSync('manifest.json','utf8'))\"",

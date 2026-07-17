@@ -10,7 +10,7 @@ wss://<OBS-PC-IP>:4455
 
 ## Version
 
-Current version: `0.2.2`.
+Current version: `0.2.4`.
 
 Notable release updates:
 
