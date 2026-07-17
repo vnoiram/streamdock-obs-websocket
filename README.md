@@ -10,12 +10,13 @@ wss://<OBS-PC-IP>:4455
 
 ## Version
 
-Current version: `0.2.0`.
+Current version: `0.2.2`.
 
-Notable `0.2.0` updates:
+Notable release updates:
 
 - Added `npm run clean` for removing generated `dist/` output.
-- Added `npm run release:zip` as the standard release entry point.
+- Added `npm run release:zip` as the standard release entry point, with OS auto-detection.
+- Added explicit `npm run release:zip:windows` and `npm run release:zip:linux` commands.
 - Release zips now include the manifest version in the filename.
 
 Actions:
@@ -108,10 +109,22 @@ npm run clean
 
 The output is written under `dist/`.
 
-Create a release zip on Windows/PowerShell:
+Create a release zip for the current OS:
+
+```bash
+npm run release:zip
+```
+
+Create a release zip explicitly on Windows/PowerShell:
 
 ```powershell
-npm run release:zip
+npm run release:zip:windows
+```
+
+Create a release zip explicitly on Linux:
+
+```bash
+npm run release:zip:linux
 ```
 
 ## OBS Setup
