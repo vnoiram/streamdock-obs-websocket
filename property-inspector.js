@@ -50,7 +50,7 @@
     'connectionPresetName', 'confirmDangerous', 'filterName', 'filterEnabled',
     'visibilityMode', 'volumeSetDb', 'transitionName'
   ];
-  var COMMON_FIELDS = ['endpoint', 'password', 'savePassword', 'connectionPresetsJson', 'connectionPresetName', 'refreshObs', 'repairNames', 'preflightCheck', 'diagnoseSettings', 'resetSettings', 'copySettings', 'pasteSettings', 'exportSettings', 'copyDiagnostics', 'importSettings'];
+  var COMMON_FIELDS = ['endpoint', 'password', 'savePassword', 'connectionPresetsJson', 'connectionPresetName', 'refreshObs', 'repairNames', 'preflightCheck', 'diagnoseSettings', 'copyDiagnostics'];
   var OPERATION_FIELDS = {
     toggle_stream: [],
     toggle_record: [],
@@ -134,7 +134,7 @@
     COMMON_FIELDS.concat(OPERATION_FIELDS[operation] || []).forEach(function (id) {
       visible[id] = true;
     });
-    SETTING_KEYS.concat(['refreshObs', 'repairNames', 'preflightCheck', 'diagnoseSettings', 'resetSettings', 'copySettings', 'pasteSettings', 'exportSettings', 'copyDiagnostics', 'importSettings']).forEach(function (id) {
+    SETTING_KEYS.concat(['refreshObs', 'repairNames', 'preflightCheck', 'diagnoseSettings', 'copyDiagnostics']).forEach(function (id) {
       setFieldVisible(id, !!visible[id]);
     });
     setFieldVisible('operation', false);
@@ -386,12 +386,6 @@
     setStatus(issues.join(', ') || 'diagnostics ok');
   }
 
-  function resetSettings() {
-    applySettings({ endpoint: 'ws://127.0.0.1:4455', password: '', savePassword: false, operation: 'toggle_stream', sceneName: '', sourceName: '', sceneItemName: '', volumeStepDb: 1, sceneCollectionName: '', profileName: '', connectionPresetsJson: '', connectionPresetName: '', confirmDangerous: false, filterName: '', filterEnabled: true, visibilityMode: 'toggle', volumeSetDb: '', transitionName: '' });
-    update();
-    setStatus('settings reset');
-  }
-
   function applySettings(next) {
     settings = mergeKnownSettings(copyKnownSettings(settings), next || {});
     settings.operation = fixedOperation();
@@ -453,72 +447,6 @@
     }
   }
 
-  function exportSettings() {
-    update();
-    var blob = new Blob([JSON.stringify(backupPayload(), null, 2)], { type: 'application/json' });
-    var link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'streamdock-obs-settings.json';
-    link.click();
-    URL.revokeObjectURL(link.href);
-  }
-
-  function importSettings(event) {
-    var file = event.target.files && event.target.files[0];
-    if (!file) return;
-    file.text().then(function (text) {
-      applySettings(settingsFromImport(JSON.parse(text)));
-      update();
-    });
-  }
-
-  function copySettings() {
-    update();
-    navigator.clipboard.writeText(JSON.stringify(backupPayload(), null, 2)).then(function () {
-      setStatus('settings copied');
-    }).catch(function () {
-      setStatus('copy failed');
-    });
-  }
-
-  function sanitizedSettings(source) {
-    var copy = Object.assign({}, source || {});
-    copy.password = '';
-    copy.savePassword = false;
-    if (copy.connectionPresetsJson) {
-      try {
-        var presets = JSON.parse(copy.connectionPresetsJson);
-        Object.keys(presets || {}).forEach(function (name) {
-          if (presets[name] && typeof presets[name] === 'object') {
-            presets[name].password = '';
-            presets[name].savePassword = false;
-          }
-        });
-        copy.connectionPresetsJson = JSON.stringify(presets, null, 2);
-      } catch (error) {
-        copy.connectionPresetsJson = '';
-      }
-    }
-    return copy;
-  }
-
-  function backupPayload() {
-    return {
-      type: 'streamdock-plugin-backup',
-      plugin: 'streamdock-obs-websocket',
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      settings: sanitizedSettings(settings)
-    };
-  }
-
-  function settingsFromImport(imported) {
-    if (imported && imported.type === 'streamdock-plugin-backup') {
-      return imported.settings || {};
-    }
-    return imported || {};
-  }
-
   function diagnosticsKey() {
     return 'streamdock-obs-websocket:diagnostics';
   }
@@ -546,16 +474,6 @@
       setStatus('diagnostics copied');
     }).catch(function () {
       setStatus('diagnostics copy failed');
-    });
-  }
-
-  function pasteSettings() {
-    navigator.clipboard.readText().then(function (text) {
-      applySettings(settingsFromImport(JSON.parse(text)));
-      update();
-      setStatus('settings pasted');
-    }).catch(function () {
-      setStatus('paste failed');
     });
   }
 
@@ -604,12 +522,7 @@
     byId('repairNames').addEventListener('click', repairNames);
     byId('preflightCheck').addEventListener('click', preflightCheck);
     byId('diagnoseSettings').addEventListener('click', diagnoseSettings);
-    byId('resetSettings').addEventListener('click', resetSettings);
-    byId('copySettings').addEventListener('click', copySettings);
-    byId('pasteSettings').addEventListener('click', pasteSettings);
-    byId('exportSettings').addEventListener('click', exportSettings);
     byId('copyDiagnostics').addEventListener('click', copyDiagnostics);
-    byId('importSettings').addEventListener('change', importSettings);
     renderEndpointStatus();
     applyVisibility();
   });

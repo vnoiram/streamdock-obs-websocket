@@ -45,9 +45,8 @@ Actions:
 - Stream and record actions show elapsed time while active.
 - Added virtual camera toggle, studio mode toggle, forced show/hide visibility modes, absolute source-volume setting, and named studio transition triggering.
 - Property Inspector auto-syncs OBS lists when opened, fetches scene items for the selected scene, fetches source filters for the selected source, and warns when configured scene/source/item/filter/profile/collection names are missing from the current OBS lists.
-- Property Inspector `Repair`, `Preflight`, `Diagnose`, and `Reset` help recover renamed OBS scenes/sources and validate remote endpoint safety.
-- Added Property Inspector `Copy` / `Paste` for quickly duplicating action settings between keys.
-- Added common backup export format, Property Inspector diagnostic log copy, and clearer combined LIVE+REC state titles/images.
+- Property Inspector `Repair`, `Preflight`, and `Diagnose` help recover renamed OBS scenes/sources and validate remote endpoint safety.
+- Added Property Inspector diagnostic log copy and clearer combined LIVE+REC state titles/images.
 
 The plugin speaks OBS WebSocket v5 directly from the Stream Dock plugin runtime. It handles the OBS `Hello` and `Identify` flow and computes authentication when a password is configured.
 
@@ -139,8 +138,7 @@ npm run release:zip:linux
    - `Operation`: stream, record, scene, mute, or volume.
    - `Scene` or `Source`: required for scene/source operations.
 6. Use the Property Inspector's `Refresh` button to fetch current OBS scenes, scene items, inputs, profiles, collections, and source filters for autocomplete. The Property Inspector also attempts this sync when opened.
-7. Use `Copy` / `Paste` in the Property Inspector to duplicate a configured OBS action to another key without exporting a file. `Copy` and `Export` remove OBS passwords from the copied JSON and from connection presets.
-8. Use `Log` to copy recent Property Inspector diagnostics. `Export` and `Copy` use the common `streamdock-plugin-backup` JSON wrapper while `Import` and `Paste` still accept older plain settings JSON.
+7. Use `Diagnostics` to copy recent Property Inspector diagnostics.
 
 The Property Inspector warns when the OBS endpoint points at another machine, and especially when a remote endpoint has no password entered. For remote OBS control, keep the OBS WebSocket port firewalled to trusted clients.
 
