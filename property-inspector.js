@@ -79,6 +79,9 @@
       return;
     }
     settings.endpoint = byId('endpoint').value.trim();
+    if (document.activeElement === byId('password') && byId('password').value) {
+      byId('savePassword').checked = true;
+    }
     settings.savePassword = byId('savePassword').checked;
     settings.password = settings.savePassword ? byId('password').value : '';
     settings.operation = fixedOperation();

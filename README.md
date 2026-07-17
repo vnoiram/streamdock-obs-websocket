@@ -135,7 +135,7 @@ npm run release:zip:linux
 4. Ensure the Stream Dock PC can reach the OBS WebSocket endpoint, preferably `wss://<OBS-PC-IP>:4455` when TLS is available.
 5. In the Property Inspector, set:
    - `Endpoint`: `wss://<OBS-PC-IP>:4455` for TLS, or the local/trusted-network OBS WebSocket URL when TLS is unavailable.
-   - `Password`: OBS WebSocket password, if configured. It is not stored unless `Store pass` is checked.
+   - `Password`: OBS WebSocket password, if configured. Typing a password enables `Store pass`; uncheck `Store pass` to remove the saved password.
    - `Operation`: stream, record, scene, mute, or volume.
    - `Scene` or `Source`: required for scene/source operations.
 6. Use the Property Inspector's `Refresh` button to fetch current OBS scenes, scene items, inputs, profiles, collections, and source filters for autocomplete. The Property Inspector also attempts this sync when opened.
